@@ -19,9 +19,8 @@ Course Info:
 
 Rules:
 - Answer ONLY using the above information
-- Keep answers short, friendly, and conversational
-- Use bullet points when helpful
-- Always guide the user toward enrollment when relevant
+- Keep answers short and clear
+- If user asks unrelated questions, guide them back to the course
 
 User: ${userMessage}
 `
@@ -30,12 +29,11 @@ User: ${userMessage}
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: "llama3-8b-8192",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt }
-        ],
-        temperature: 0.5
+        ]
       },
       {
         headers: {
@@ -57,9 +55,8 @@ app.post("/webhook", async (req, res) => {
     const msg = req.body?.messages?.[0]
     const text = msg?.text?.body
     const from = msg?.from
-    const fromMe = msg?.from_me
 
-    if (!text || !from || fromMe) return res.sendStatus(200)
+    if (!text || !from) return res.sendStatus(200)
 
     let reply = ""
     const userText = text.toLowerCase()
@@ -69,8 +66,6 @@ app.post("/webhook", async (req, res) => {
     } else {
       reply = await getLLMResponse(text)
     }
-
-    await new Promise(r => setTimeout(r, 800))
 
     await axios.post(
       "https://gate.whapi.cloud/messages/text",
@@ -88,7 +83,7 @@ app.post("/webhook", async (req, res) => {
 
     res.sendStatus(200)
   } catch (err) {
-    console.log("server error:", err.message)
+    console.log("error:", err.message)
     res.sendStatus(200)
   }
 })
